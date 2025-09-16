@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\workspace\\openai\\demo/**)",
+      "Read(/C:\\workspace\\openai\\demo/**)",
+      "Read(/C:\\workspace\\openai\\my-nextjs-app\\src\\app\\order/**)",
+      "Bash(cmd /c:*)",
+      "Bash(psql:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
