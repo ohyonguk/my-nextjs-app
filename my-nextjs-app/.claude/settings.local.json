@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\workspace\\openai\\my-nextjs-app/**)",
+      "Read(/C:\\workspace\\openai\\my-nextjs-app\\src\\app\\order/**)",
+      "Read(/C:\\workspace\\openai\\my-nextjs-app\\src\\app/**)",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
