@@ -21,8 +21,8 @@ export default function OrderForm({ user, onLogout }: OrderFormProps) {
   const [pointsToUse, setPointsToUse] = useState(0);
   const [cardAmount, setCardAmount] = useState(100);
   const [isProcessing, setIsProcessing] = useState(false);
-
   useEffect(() => {
+
     // 결제 완료 메시지 리스너
     const handlePaymentMessage = (event: MessageEvent) => {
       console.log('Received message:', event.data);
@@ -96,6 +96,45 @@ export default function OrderForm({ user, onLogout }: OrderFormProps) {
     setCardAmount(amount - adjustedPoints);
   };
 
+  // 통합 결제 팝업 열기 (sessionStorage 사용)
+  const openPaymentPopup = (orderData: any) => {
+    const timestamp = Date.now().toString();
+    const paymentData = {
+      oid: orderData.orderNo,
+      price: cardAmount.toString(),
+      goodname: '테스트 상품',
+      buyername: user.name,
+      buyeremail: user.email,
+      buyertel: user.phoneNumber || '010-0000-0000',
+      timestamp: timestamp,
+      orderId: orderData.orderId?.toString() || ''
+    };
+
+    // sessionStorage에 결제 데이터 저장
+    const paymentKey = `payment_${timestamp}`;
+    sessionStorage.setItem(paymentKey, JSON.stringify(paymentData));
+
+    // 새 창에서 결제 선택 팝업 열기 (키만 전달)
+    const popupWindow = window.open(
+      `/order/payment-selector?key=${paymentKey}`,
+      'paymentSelectorPopup',
+      'width=500,height=700,scrollbars=yes,resizable=yes'
+    );
+
+    if (!popupWindow) {
+      alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+      setIsProcessing(false);
+    }
+
+    // 팝업이 닫힌 후 sessionStorage 정리
+    const checkClosed = setInterval(() => {
+      if (popupWindow.closed) {
+        sessionStorage.removeItem(paymentKey);
+        clearInterval(checkClosed);
+      }
+    }, 1000);
+  };
+
   const handlePayment = async () => {
     // 최소 주문 금액 검증
     if (orderAmount < 100) {
@@ -152,28 +191,8 @@ export default function OrderForm({ user, onLogout }: OrderFormProps) {
       }
 
       if (cardAmount > 0) {
-        // payment-popup 페이지로 이동하면서 결제 정보 전달
-        const timestamp = Date.now().toString();
-        const paymentParams = new URLSearchParams({
-          oid: orderData.orderNo,
-          price: cardAmount.toString(),
-          goodname: '테스트 상품',
-          buyername: user.name,
-          buyeremail: user.email,
-          buyertel: user.phoneNumber || '010-0000-0000',
-          timestamp: timestamp
-        });
-
-        // 새 창에서 결제 팝업 열기
-        const popupWindow = window.open(
-          `/order/payment-popup?${paymentParams.toString()}`,
-          'paymentPopup',
-          'width=700,height=700,scrollbars=yes,resizable=yes'
-        );
-
-        if (!popupWindow) {
-          alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
-        }
+        // 통합 결제 팝업 열기
+        openPaymentPopup(orderData);
       } else {
         // 적립금만 사용 (카드 결제 없음) - 백업 로직
         console.log('Fallback: Points only payment, redirecting to success page');
@@ -261,6 +280,7 @@ export default function OrderForm({ user, onLogout }: OrderFormProps) {
           </div>
         </div>
 
+
         {/* 결제 금액 요약 */}
         <div className="p-4 bg-gray-50 rounded-lg">
           <h3 className="text-lg font-medium text-gray-800 mb-3">결제 금액</h3>
@@ -278,15 +298,24 @@ export default function OrderForm({ user, onLogout }: OrderFormProps) {
               <span>카드 결제금액:</span>
               <span className="text-blue-600">{cardAmount.toLocaleString()}원</span>
             </div>
+            {cardAmount > 0 && (
+              <div className="flex justify-between text-sm text-gray-600 mt-2">
+                <span>결제 방법:</span>
+                <span className="font-medium">팝업에서 선택</span>
+              </div>
+            )}
           </div>
         </div>
 
         <button
           onClick={handlePayment}
           disabled={isProcessing || orderAmount < 100}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-lg font-medium"
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all text-lg font-medium"
         >
-          {isProcessing ? '결제 진행 중...' : `${cardAmount.toLocaleString()}원 결제하기`}
+          {isProcessing
+            ? '결제 진행 중...'
+            : `${cardAmount.toLocaleString()}원 결제하기`
+          }
         </button>
       </div>
     </div>

@@ -185,20 +185,37 @@ function generateCloseWindowHtml(message: string, status: string, data?: any): s
         message: '${message}',
         data: ${JSON.stringify(data || {})}
       };
-      
+
       console.log('Sending postMessage to parent:', result);
       window.opener.postMessage(result, '*');
-      
-      // 2초 후 창 닫기
+
+      // 결제 성공 시 부모 창을 주문완료 페이지로 리다이렉트
+      if ('${status}' === 'success') {
+        const orderNo = ${JSON.stringify(data?.orderNo || '')};
+        const amount = ${JSON.stringify(data?.amount || '')};
+        const redirectUrl = \`/order/success?status=success&message=\${encodeURIComponent('${message}')}&orderNo=\${orderNo}&amount=\${amount}\`;
+
+        console.log('Redirecting parent to:', redirectUrl);
+        window.opener.location.href = redirectUrl;
+      }
+
+      // 1초 후 창 닫기
       setTimeout(function() {
         window.close();
-      }, 2000);
+      }, 1000);
     } else {
       console.log('No parent window found');
-      // 부모 창이 없으면 3초 후 현재 창에서 주문 페이지로 이동
-      setTimeout(function() {
-        window.location.href = '/order';
-      }, 3000);
+      // 부모 창이 없으면 결제 성공 시 주문완료 페이지로, 실패 시 주문 페이지로 이동
+      if ('${status}' === 'success') {
+        const orderNo = ${JSON.stringify(data?.orderNo || '')};
+        const amount = ${JSON.stringify(data?.amount || '')};
+        const redirectUrl = \`/order/success?status=success&message=\${encodeURIComponent('${message}')}&orderNo=\${orderNo}&amount=\${amount}\`;
+        window.location.href = redirectUrl;
+      } else {
+        setTimeout(function() {
+          window.location.href = '/order';
+        }, 3000);
+      }
     }
   </script>
 </body>

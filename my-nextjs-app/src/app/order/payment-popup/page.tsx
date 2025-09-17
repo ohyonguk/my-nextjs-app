@@ -27,7 +27,7 @@ const PaymentPopupPage = () => {
     script.async = true;
     document.head.appendChild(script);
 
-    const initPayment = () => {
+    const initPayment = async () => {
       // INIStdPay 로드 확인
       if (!(window as any).INIStdPay) {
         console.log('INIStdPay not loaded yet, retrying...')
@@ -91,6 +91,26 @@ const PaymentPopupPage = () => {
 
       document.body.appendChild(form)
 
+      // 결제 요청 데이터를 백엔드에 로깅
+      try {
+        await fetch('http://localhost:8081/api/payment/log-request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderNo: orderData.oid,
+            requestType: 'PAYMENT_REQUEST_POPUP',
+            requestUrl: 'https://stgstdpay.inicis.com/stdpay/INIpayStdPayRequest.do',
+            requestData: params
+          }),
+        }).catch(error => {
+          console.error('결제 요청 로깅 실패:', error)
+        })
+      } catch (error) {
+        console.error('결제 요청 로깅 에러:', error)
+      }
+
       // 결제 호출
       try {
         console.log('=== 이니시스 결제 호출 시작 ===')
@@ -98,7 +118,7 @@ const PaymentPopupPage = () => {
         console.log('Form action:', form.action)
         console.log('Payment params:', params)
         console.log('INIStdPay 객체 존재:', !!(window as any).INIStdPay)
-        
+
         // 이니시스 결제 호출
         const result = (window as any).INIStdPay.pay('paymentForm')
         console.log('INIStdPay.pay 호출 결과:', result)

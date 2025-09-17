@@ -48,7 +48,7 @@ export const generateMKey = (mid: string): string => {
   return CryptoJS.SHA256(data).toString(CryptoJS.enc.Hex)
 }
 
-export const initializePayment = (params: Omit<PaymentParams, 'signature' | 'verification' | 'mKey' | 'use_chkfake' | 'closeUrl' | 'acceptmethod'>) => {
+export const initializePayment = async (params: Omit<PaymentParams, 'signature' | 'verification' | 'mKey' | 'use_chkfake' | 'closeUrl' | 'acceptmethod'>) => {
   // 파라미터 검증
   if (!params.mid || !params.oid || !params.price || !params.timestamp) {
     alert('필수 파라미터가 누락되었습니다.')
@@ -116,7 +116,27 @@ export const initializePayment = (params: Omit<PaymentParams, 'signature' | 'ver
 
   document.body.appendChild(form)
   console.log('Payment params:', formData)
-  
+
+  // 결제 요청 데이터를 백엔드에 로깅
+  try {
+    await fetch('http://localhost:8081/api/payment/log-request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderNo: params.oid,
+        requestType: 'PAYMENT_REQUEST',
+        requestUrl: 'https://stgstdpay.inicis.com/stdpay/pay.ini',
+        requestData: formData
+      }),
+    }).catch(error => {
+      console.error('결제 요청 로깅 실패:', error)
+    })
+  } catch (error) {
+    console.error('결제 요청 로깅 에러:', error)
+  }
+
   // 폼 제출
   form.submit()
   
