@@ -5,7 +5,14 @@
       "Read(/C:\\workspace\\openai\\demo/**)",
       "Read(/C:\\workspace\\openai\\my-nextjs-app\\src\\app\\order/**)",
       "Bash(cmd /c:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(./gradlew:*)",
+      "Bash(rm:*)",
+      "WebFetch(domain:developers.nicepay.co.kr)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
